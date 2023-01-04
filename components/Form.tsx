@@ -187,25 +187,25 @@ const ambienceArray = [
   {
     id: 1,
     name: "waves",
-    imagePath: "/images/waves-beach.gif",
-    soundPath: "/audio/ocean-waves-audio.mp3",
+    imagePath: "https://media.tenor.com/nrxsL7xAR6IAAAAM/ghibli-sea.gif",
+    soundPath: "/audio/ocean.mp3",
   },
   {
     id: 2,
     name: "waterfall",
-    imagePath: "/images/waterfall.gif",
-    soundPath: "/audio/river-stream.mp3",
+    imagePath: "https://media.tenor.com/2h6XAJm51IcAAAAM/stresam-aesthetic.gif",
+    soundPath: "/audio/river.mp3",
   },
   {
     id: 3,
     name: "rain",
-    imagePath: "/images/rain.gif",
-    soundPath: "/audio/rain-crickets.mp3",
+    imagePath: "https://media.tenor.com/TCuck5iIIH4AAAAC/rain-anime-rain.gif",
+    soundPath: "/audio/rain.mp3",
   },
   {
     id: 4,
-    name: "rain",
-    imagePath: "/images/clock.gif",
+    name: "clock",
+    imagePath: "https://media.tenor.com/_h_1fcwEkHYAAAAC/studying-windy.gif",
     soundPath: "/audio/ticking.mp3",
   },
 ];

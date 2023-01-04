@@ -12,8 +12,8 @@ export const ContextProvider = ({ children }: any) => {
     ambience: {
       id: 1,
       name: "waves",
-      imagePath: "/images/waves-beach.gif",
-      soundPath: "/audio/ocean-waves-audio.mp3",
+      imagePath: "https://media.tenor.com/nrxsL7xAR6IAAAAM/ghibli-sea.gif",
+      soundPath: "/audio/ocean.mp3",
     },
   });
 
