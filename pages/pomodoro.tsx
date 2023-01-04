@@ -1,0 +1,317 @@
+import Head from "next/head";
+import Image from "next/image";
+import { useState, useEffect, useRef } from "react";
+import styled from "styled-components";
+import { BsDashLg, BsPauseFill, BsFillPlayFill } from "react-icons/bs";
+
+import { BiFullscreen, BiExitFullscreen } from "react-icons/bi";
+
+import { useTimerData } from "../context/Timer";
+
+const Main = styled.main`
+  .main-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    height: 100vh;
+    width: 100vw;
+    object-fit: cover;
+    object-position: bottom center;
+
+    filter: blur(6px);
+    -webkit-filter: blur(6px);
+    transform: scale(1.025);
+  }
+`;
+
+const MainWrapper = styled.div`
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  justify-items: center;
+  align-items: center;
+
+  @media (min-width: 767px) {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
+
+const Timer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  gap: 1rem;
+
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 0;
+
+  font-size: clamp(6rem, 9vw, 7rem);
+  color: ${({ theme }) => theme.primary};
+
+  font-weight: 900;
+
+  .box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    span:last-child {
+      font-size: 1rem;
+    }
+
+    &:nth-child(3) {
+      color: ${({ theme }) => theme.accent};
+    }
+  }
+
+  .dots {
+    flex-direction: row;
+    font-size: 1.75rem;
+    gap: 0.25rem;
+    color: ${({ theme }) => theme.accent};
+  }
+`;
+
+const Tasks = styled.div`
+  width: 80%;
+  padding-bottom: 5rem;
+
+  @media (min-width: 767px) {
+    padding: 0;
+  }
+
+  .main-heading {
+    font-size: clamp(4rem, 7vw, 6rem);
+    color: #fff;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+
+    font-weight: 900;
+  }
+
+  .line {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background: #fff;
+  }
+
+  .task {
+    input:checked ~ & {
+      color: red;
+    }
+    user-select: none;
+    cursor: pointer;
+    background-color: ${({ theme }) => theme.primary};
+    font-weight: 600;
+    color: ${({ theme }) => theme.faded};
+    padding: 1rem;
+
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-radius: 5px 2px 2px 5px;
+    margin-top: 1rem;
+
+    border-left: 10px solid #ff5f1f;
+
+    input {
+      transform: scale(1.2);
+    }
+  }
+`;
+
+interface PlayButtonProps {
+  color: string;
+  right: string;
+}
+
+const PlayButton = styled.div<PlayButtonProps>`
+  box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: fixed;
+
+  bottom: 2rem;
+  right: ${({ right }) => right};
+  z-index: 20;
+  background: ${({ theme, color }) => theme[color]};
+
+  padding: 0.75rem;
+  border-radius: 50%;
+
+  .icon {
+    font-size: 1.75rem;
+    color: ${({ theme }) => theme.primary};
+  }
+`;
+
+export default function Pomodoro() {
+  const timerData = useTimerData();
+  const audio = useRef<HTMLAudioElement | null>(null);
+  const screen = useRef<HTMLElement | null>(null);
+
+  const [data, setData] = useState({
+    sessions: timerData.session,
+    work: timerData.work,
+    break: timerData.break,
+  });
+
+  const [minutes, setMinutes] = useState(data.work);
+  const [seconds, setSeconds] = useState(0);
+  const [isBreak, setIsBreak] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(true);
+
+  useEffect(() => {
+    let interval = setInterval(() => {
+      // check session count
+      if (data.sessions <= 0) {
+        return;
+      }
+
+      // if time is over
+      if (minutes == 0 && seconds == 0) {
+        // check for last session
+        if (isBreak && data.sessions == 1) {
+          setData((prev) => ({ ...prev, sessions: prev.sessions - 1 }));
+          setMinutes(0);
+          return;
+        }
+
+        // down the session by one
+        isBreak &&
+          setData((prev) => ({ ...prev, sessions: prev.sessions - 1 }));
+
+        // toggle the break
+        !isBreak ? setMinutes(data.break) : setMinutes(data.work);
+
+        setIsBreak((prev) => !prev);
+
+        return;
+      }
+
+      if (seconds > 0) {
+        setSeconds((prev: number) => prev - 1);
+      } else {
+        setMinutes((prev: number) => prev - 1);
+        setSeconds(59);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [seconds, minutes, data.break, data.work, isBreak, data.sessions]);
+
+  function play() {
+    if (isAudioPlaying) {
+      audio.current?.pause();
+      setIsAudioPlaying(false);
+      return;
+    }
+
+    audio.current?.play();
+    setIsAudioPlaying(true);
+  }
+
+  function fullScreen() {
+    if (screen.current?.requestFullscreen) {
+      screen.current?.requestFullscreen();
+      setIsFullScreen(true);
+    }
+  }
+
+  function exitFullScreen() {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+      setIsFullScreen(false);
+    }
+  }
+
+  return (
+    <>
+      <Head>
+        <title>Pomodoro | Tasks</title>
+        <meta name="description" content="Generated by create next app" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <Main ref={screen}>
+        <audio autoPlay ref={audio} loop>
+          <source
+            src={timerData.ambience.soundPath || "/ocean-waves-audio.mp3"}
+            type="audio/mpeg"
+          />
+          Your browser does not support the audio element.
+        </audio>
+        <Image
+          priority
+          src={timerData.ambience.imagePath || "/images/waves-beach.gif"}
+          height={100}
+          width={400}
+          alt=""
+          className="main-bg"
+        />
+        <PlayButton onClick={() => play()} color="accent" right="2rem">
+          {isAudioPlaying ? (
+            <BsPauseFill className="icon" />
+          ) : (
+            <BsFillPlayFill className="icon" />
+          )}
+        </PlayButton>
+        <PlayButton
+          onClick={() => (isFullScreen ? exitFullScreen() : fullScreen())}
+          color="faded"
+          right="6rem"
+        >
+          {!isFullScreen ? (
+            <BiFullscreen className="icon" />
+          ) : (
+            <BiExitFullscreen className="icon" />
+          )}
+        </PlayButton>
+        <MainWrapper>
+          <Timer>
+            <div className="box">
+              <span>00 : </span>
+              <span>Hours</span>
+            </div>
+            <div className="box">
+              <span> {minutes > 9 ? minutes : `0${minutes}`} : </span>
+              <span>Minutes</span>
+            </div>
+            <div className="box">
+              <span>{seconds > 9 ? seconds : `0${seconds}`} : </span>
+              <span>Seconds</span>
+            </div>
+            <div className="box dots">
+              {Array(data.sessions)
+                .fill("0")
+                .map((e, i) => (
+                  <BsDashLg key={i} />
+                ))}
+            </div>
+          </Timer>
+          <Tasks>
+            <div className="main-heading">{isBreak ? "Break" : "Tasks"}</div>
+            <span className="line"></span>
+
+            {timerData.tasks.map((task: string, index: number) => (
+              <label htmlFor={`task${index}`} key={index}>
+                <div className="task">
+                  <input type="checkbox" id={`task${index}`} />
+                  <span>{task}</span>
+                </div>
+              </label>
+            ))}
+          </Tasks>
+        </MainWrapper>
+      </Main>
+    </>
+  );
+}
